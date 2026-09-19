@@ -55,8 +55,10 @@
  * nd->flags => storing flag 'ND_FLAGS_'
  * task_struct->thread_info.flags => storing flag 'TIF_'
  */
- // thread_info->flags is unsigned long :D
+ /* thread_info->flags is unsigned long */
 #define TIF_PROC_UMOUNTED 33
+#define TIF_PROC_NO_SU 34 /* SukiSU 4.2+: tach root-deny vs umount */
+#define TIF_PROC_UMOUNTED_FOR_ZYGOTE_NEXT 35 /* SukiSU 4.2+: zygote_next ke thua init mnt ns */
 
 #define AS_FLAGS_SUS_PATH 33
 #define AS_FLAGS_SUS_MOUNT 34
@@ -67,7 +69,7 @@
 #define ND_STATE_LOOKUP_LAST 32
 #define ND_STATE_OPEN_LAST 64
 #define ND_FLAGS_LOOKUP_LAST		0x2000000
- 
+
 #define MAGIC_MOUNT_WORKDIR "/debug_ramdisk/workdir"
 
 static inline bool susfs_starts_with(const char *str, const char *prefix) {
@@ -101,9 +103,37 @@ static inline void susfs_set_current_proc_umounted(void) {
 	set_thread_flag(TIF_PROC_UMOUNTED);
 }
 
+static inline void susfs_clear_current_proc_umounted(void) {
+	clear_thread_flag(TIF_PROC_UMOUNTED);
+}
+
+static inline bool susfs_is_current_proc_umounted_for_zygote_next(void) {
+	return (likely(test_thread_flag(TIF_PROC_UMOUNTED_FOR_ZYGOTE_NEXT)));
+}
+
+static inline void susfs_set_current_proc_umounted_for_zygote_next(void) {
+	set_thread_flag(TIF_PROC_UMOUNTED_FOR_ZYGOTE_NEXT);
+}
+
+static inline void susfs_clear_current_proc_umounted_for_zygote_next(void) {
+	clear_thread_flag(TIF_PROC_UMOUNTED_FOR_ZYGOTE_NEXT);
+}
+
 static inline bool susfs_is_current_proc_umounted_app(void) {
 	return (likely(test_thread_flag(TIF_PROC_UMOUNTED)) &&
 			current_uid().val >= 10000);
+}
+
+static inline bool susfs_is_current_proc_no_su(void) {
+	return (likely(test_thread_flag(TIF_PROC_NO_SU)));
+}
+
+static inline void susfs_set_current_proc_no_su(void) {
+	set_thread_flag(TIF_PROC_NO_SU);
+}
+
+static inline void susfs_clear_current_proc_no_su(void) {
+	clear_thread_flag(TIF_PROC_NO_SU);
 }
 
 #define SUSFS_IS_INODE_SUS_MAP(inode) \
