@@ -863,9 +863,18 @@ static void handle_notification(struct battery_chg_dev *bcdev, void *data,
 	case BC_USB_STATUS_GET:
 		pst = &bcdev->psy_list[PSY_TYPE_USB];
 		schedule_work(&bcdev->usb_type_work);
+		/*
+		 * Xperia batmon: USB plug/unplug must also refresh battery psy
+		 * so EXTRA_PLUGGED / charge_counter update without waiting for
+		 * the next BC_BATTERY_STATUS_GET (charge time / on-battery).
+		 */
+		if (bcdev->psy_list[PSY_TYPE_BATTERY].psy)
+			power_supply_changed(bcdev->psy_list[PSY_TYPE_BATTERY].psy);
 		break;
 	case BC_WLS_STATUS_GET:
 		pst = &bcdev->psy_list[PSY_TYPE_WLS];
+		if (bcdev->psy_list[PSY_TYPE_BATTERY].psy)
+			power_supply_changed(bcdev->psy_list[PSY_TYPE_BATTERY].psy);
 		break;
 	default:
 		break;
